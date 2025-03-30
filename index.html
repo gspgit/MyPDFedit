@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced PDF Toolkit</title>
+    <title>PDF Toolkit</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
@@ -12,8 +12,8 @@
 </head>
 <body>
     <header>
-        <h1>Advanced PDF Toolkit</h1>
-        <p>All processing done in your browser - 100% secure</p>
+        <h1>PDF Toolkit</h1>
+        <p>Merge, Split, Convert PDFs - 100% Client-Side</p>
     </header>
 
     <div class="tool-container">
@@ -21,7 +21,7 @@
         <div class="tool-card">
             <h2>Merge PDFs</h2>
             <input type="file" class="file-input" id="mergeInput" accept=".pdf" multiple>
-            <button onclick="mergePDFs()" class="btn">Merge PDFs</button>
+            <button onclick="mergePDFs()" class="btn">Merge & Download</button>
         </div>
 
         <!-- Split PDF -->
@@ -44,16 +44,16 @@
             <h2>Rotate PDF</h2>
             <input type="file" class="file-input" id="rotateInput" accept=".pdf">
             <select id="rotateAngle" class="select-input">
-                <option value="90">90° Clockwise</option>
-                <option value="-90">90° Counter</option>
+                <option value="90">90°</option>
                 <option value="180">180°</option>
+                <option value="-90">-90°</option>
             </select>
             <button onclick="rotatePDF()" class="btn">Rotate</button>
         </div>
 
         <!-- Add Watermark -->
         <div class="tool-card">
-            <h2>Watermark PDF</h2>
+            <h2>Add Watermark</h2>
             <input type="file" class="file-input" id="watermarkInput" accept=".pdf">
             <input type="text" id="watermarkText" placeholder="Watermark text" class="text-input">
             <button onclick="addWatermark()" class="btn">Apply</button>
@@ -72,28 +72,6 @@
             <input type="file" class="file-input" id="textInput" accept=".pdf">
             <button onclick="extractText()" class="btn">Extract</button>
             <div id="textOutput" class="text-output"></div>
-        </div>
-    </div>
-
-    <!-- Preview Modal -->
-    <div id="previewModal" class="preview-modal">
-        <div class="preview-content">
-            <div class="preview-header">
-                <h3>Preview - <span id="currentPart"></span></h3>
-                <div class="preview-controls">
-                    <button onclick="changePart(-1)" class="btn" id="prevPartBtn">← Part</button>
-                    <button onclick="changePage(-1)" class="btn">← Page</button>
-                    <span id="currentPage">Page 1</span>
-                    <button onclick="changePage(1)" class="btn">Page →</button>
-                    <button onclick="changePart(1)" class="btn" id="nextPartBtn">Part →</button>
-                </div>
-                <button onclick="closePreview()" class="btn close-btn">&times;</button>
-            </div>
-            <div id="pdfPreview"></div>
-            <div class="preview-footer">
-                <button onclick="downloadCurrentPart()" class="btn download-btn">Download</button>
-                <button onclick="closePreview()" class="btn cancel-btn">Cancel</button>
-            </div>
         </div>
     </div>
 
