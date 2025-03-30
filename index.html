@@ -3,45 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF ToolKit</title>
+    <title>PDF Toolkit</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1"></script>
-    <script src="https://unpkg.com/jspdf@2.5.1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <header>
         <h1>PDF Toolkit</h1>
-        <p>Merge, Split, Convert PDFs for Free</p>
+        <p>Merge, Split, Convert PDFs - 100% Client-Side</p>
     </header>
 
-    <div class="toolbox">
-        <!-- PDF Upload -->
-        <div class="tool-card" id="upload-tool">
-            <h2>Upload PDF</h2>
-            <input type="file" id="pdf-input" accept=".pdf" multiple>
-            <div id="pdf-preview"></div>
-        </div>
-
+    <div class="tool-container">
         <!-- Merge PDFs -->
-        <div class="tool-card" id="merge-tool">
+        <div class="tool-card">
             <h2>Merge PDFs</h2>
-            <button id="merge-btn">Merge & Download</button>
+            <input type="file" class="file-input" id="mergeInput" accept=".pdf" multiple>
+            <button onclick="mergePDFs()" class="btn">Merge & Download</button>
         </div>
 
         <!-- Split PDF -->
-        <div class="tool-card" id="split-tool">
+        <div class="tool-card">
             <h2>Split PDF</h2>
-            <input type="number" id="split-page" placeholder="Page number">
-            <button id="split-btn">Split & Download</button>
+            <input type="file" class="file-input" id="splitInput" accept=".pdf">
+            <input type="number" id="splitPage" placeholder="Split after page..." class="num-input">
+            <button onclick="splitPDF()" class="btn">Split PDF</button>
         </div>
 
         <!-- Image to PDF -->
-        <div class="tool-card" id="image-to-pdf">
+        <div class="tool-card">
             <h2>Image to PDF</h2>
-            <input type="file" id="image-input" accept="image/*">
-            <button id="convert-btn">Convert to PDF</button>
+            <input type="file" class="file-input" id="imageInput" accept="image/*">
+            <button onclick="imageToPDF()" class="btn">Convert</button>
+        </div>
+
+        <!-- Rotate PDF -->
+        <div class="tool-card">
+            <h2>Rotate PDF</h2>
+            <input type="file" class="file-input" id="rotateInput" accept=".pdf">
+            <select id="rotateAngle" class="select-input">
+                <option value="90">90°</option>
+                <option value="180">180°</option>
+                <option value="-90">-90°</option>
+            </select>
+            <button onclick="rotatePDF()" class="btn">Rotate</button>
+        </div>
+
+        <!-- Add Watermark -->
+        <div class="tool-card">
+            <h2>Add Watermark</h2>
+            <input type="file" class="file-input" id="watermarkInput" accept=".pdf">
+            <input type="text" id="watermarkText" placeholder="Watermark text" class="text-input">
+            <button onclick="addWatermark()" class="btn">Apply</button>
+        </div>
+
+        <!-- Compress PDF -->
+        <div class="tool-card">
+            <h2>Compress PDF</h2>
+            <input type="file" class="file-input" id="compressInput" accept=".pdf">
+            <button onclick="compressPDF()" class="btn">Compress</button>
+        </div>
+
+        <!-- Extract Text -->
+        <div class="tool-card">
+            <h2>Extract Text</h2>
+            <input type="file" class="file-input" id="textInput" accept=".pdf">
+            <button onclick="extractText()" class="btn">Extract</button>
+            <div id="textOutput" class="text-output"></div>
         </div>
     </div>
 
