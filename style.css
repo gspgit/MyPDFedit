@@ -1,51 +1,97 @@
+/* Base Styles */
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 20px;
-    background: #f5f5f5;
+    background: #f0f2f5;
+    color: #333;
 }
 
 header {
     text-align: center;
     margin-bottom: 30px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.toolbox {
-    display: flex;
-    flex-wrap: wrap;
+/* Tool Container */
+.tool-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
-    justify-content: center;
+    padding: 20px;
 }
 
+/* Tool Cards */
 .tool-card {
-    background: white;
+    background: #fff;
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 300px;
-    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
 }
 
-button, input {
+.tool-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Inputs & Buttons */
+.file-input {
+    width: 100%;
     margin: 10px 0;
-    padding: 8px 15px;
-    border: none;
+    padding: 8px;
+    border: 1px solid #ddd;
     border-radius: 5px;
-}
-
-button {
-    background: #4CAF50;
-    color: white;
     cursor: pointer;
 }
 
-button:hover {
+.btn {
+    background: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: background 0.3s;
+    font-size: 16px;
+}
+
+.btn:hover {
     background: #45a049;
 }
 
-#pdf-preview {
-    margin-top: 15px;
-    border: 1px dashed #ccc;
+.num-input, .select-input, .text-input {
+    width: 100%;
     padding: 10px;
-    min-height: 100px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Text Output */
+.text-output {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tool-container {
+        grid-template-columns: 1fr;
+    }
+    
+    body {
+        padding: 10px;
+    }
 }
