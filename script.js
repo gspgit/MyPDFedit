@@ -1,185 +1,230 @@
-// Helper function to get filename without extension
-function getFileName(file) {
-    return file.name.replace(/\.[^/.]+$/, "");
-}
+// Utility Functions
+const showLoading = () => document.getElementById('loadingOverlay').style.display = 'flex';
+const hideLoading = () => document.getElementById('loadingOverlay').style.display = 'none';
 
-// Merge PDFs
+const showError = (toolId, message) => {
+    const errorElement = document.getElementById(`${toolId}Error`);
+    errorElement.textContent = message;
+    errorElement.classList.add('active');
+    setTimeout(() => errorElement.classList.remove('active'), 5000);
+};
+
+const validatePDF = async (file) => {
+    const header = await file.slice(0, 4).arrayBuffer();
+    const view = new Uint8Array(header);
+    return view[0] === 0x25 && view[1] === 0x50 && view[2] === 0x44 && view[3] === 0x46; // %PDF
+};
+
+// Initialize File Inputs
+document.querySelectorAll('input[type="file"]').forEach(input => {
+    input.addEventListener('change', async (e) => {
+        const fileList = document.getElementById(`${e.target.id}FileList`);
+        const files = Array.from(e.target.files);
+        
+        // Validate PDF files
+        if (input.accept === '.pdf') {
+            for (const file of files) {
+                if (!await validatePDF(file)) {
+                    showError(input.id.replace('Input', ''), `Invalid PDF: ${file.name}`);
+                    e.target.value = '';
+                    fileList.textContent = '';
+                    return;
+                }
+            }
+        }
+        
+        fileList.textContent = files.map(f => f.name).join(', ');
+    });
+});
+
+// PDF Processing Functions
 async function mergePDFs() {
+    showLoading();
     try {
         const files = document.getElementById('mergeInput').files;
-        if (files.length < 2) throw new Error('Please select 2+ PDFs');
+        if (files.length < 2) throw new Error('Please select at least 2 PDF files');
         
         const { PDFDocument } = PDFLib;
         const mergedPdf = await PDFDocument.create();
-        const originalName = getFileName(files[0]);
-
+        
         for (const file of files) {
-            const fileBytes = await file.arrayBuffer();
-            const pdfDoc = await PDFDocument.load(fileBytes);
+            const pdfBytes = await file.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(pdfBytes);
             const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
             pages.forEach(page => mergedPdf.addPage(page));
         }
-
+        
         const mergedBytes = await mergedPdf.save();
-        saveAs(new Blob([mergedBytes], { type: 'application/pdf' }), `${originalName}_merged.pdf`);
+        saveAs(new Blob([mergedBytes], { type: 'application/pdf' }), 'merged.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('merge', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Split PDF
 async function splitPDF() {
+    showLoading();
     try {
         const file = document.getElementById('splitInput').files[0];
         const splitPage = parseInt(document.getElementById('splitPage').value);
-        if (!file || isNaN(splitPage)) throw new Error('Invalid input');
-
+        if (!file) throw new Error('Please select a PDF file');
+        if (isNaN(splitPage) throw new Error('Please enter a valid page number');
+        
         const { PDFDocument } = PDFLib;
-        const fileBytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(fileBytes);
-        const pageCount = pdfDoc.getPageCount();
-        const originalName = getFileName(file);
-
-        if (splitPage < 1 || splitPage >= pageCount) throw new Error(`Enter a page between 1 and ${pageCount - 1}`);
-
-        const firstPart = await PDFDocument.create();
-        const secondPart = await PDFDocument.create();
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const totalPages = pdfDoc.getPageCount();
         
-        const firstPages = await firstPart.copyPages(pdfDoc, [...Array(splitPage).keys()]);
-        const secondPages = await secondPart.copyPages(pdfDoc, [...Array(pageCount - splitPage).keys()].map(i => i + splitPage));
+        if (splitPage < 1 || splitPage >= totalPages) throw new Error(`Enter a page between 1 and ${totalPages - 1}`);
         
-        firstPages.forEach(page => firstPart.addPage(page));
-        secondPages.forEach(page => secondPart.addPage(page));
+        const firstDoc = await PDFDocument.create();
+        const secondDoc = await PDFDocument.create();
         
-        const firstBytes = await firstPart.save();
-        const secondBytes = await secondPart.save();
+        // Copy pages
+        const firstPages = await firstDoc.copyPages(pdfDoc, Array.from({ length: splitPage }, (_, i) => i));
+        const secondPages = await secondDoc.copyPages(pdfDoc, Array.from({ length: totalPages - splitPage }, (_, i) => i + splitPage));
         
-        saveAs(new Blob([firstBytes], { type: 'application/pdf' }), `${originalName}_part1.pdf`);
-        saveAs(new Blob([secondBytes], { type: 'application/pdf' }), `${originalName}_part2.pdf`);
+        firstPages.forEach(page => firstDoc.addPage(page));
+        secondPages.forEach(page => secondDoc.addPage(page));
+        
+        // Save and download
+        const firstBytes = await firstDoc.save();
+        const secondBytes = await secondDoc.save();
+        
+        saveAs(new Blob([firstBytes], { type: 'application/pdf' }), 'part1.pdf');
+        saveAs(new Blob([secondBytes], { type: 'application/pdf' }), 'part2.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('split', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Image to PDF
 async function imageToPDF() {
+    showLoading();
     try {
         const file = document.getElementById('imageInput').files[0];
-        if (!file) throw new Error('Please select an image');
-        const originalName = getFileName(file);
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF();
-                const width = pdf.internal.pageSize.getWidth() - 20;
-                const height = (img.height * width) / img.width;
-                pdf.addImage(img, 'JPEG', 10, 10, width, height);
-                pdf.save(`${originalName}_converted.pdf`);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        if (!file) throw new Error('Please select an image file');
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        const img = await createImageBitmap(file);
+        
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+        
+        pdf.addImage(img, 'JPEG', 0, 0, img.width * ratio, img.height * ratio);
+        pdf.save('converted.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('image', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Rotate PDF
 async function rotatePDF() {
+    showLoading();
     try {
         const file = document.getElementById('rotateInput').files[0];
         const angle = parseInt(document.getElementById('rotateAngle').value);
-        if (!file) throw new Error('Select a PDF file');
-        const originalName = getFileName(file);
-
+        if (!file) throw new Error('Please select a PDF file');
+        
         const { PDFDocument } = PDFLib;
-        const bytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(bytes);
-        const pages = pdfDoc.getPages();
-        pages.forEach(page => page.setRotation(angle));
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        
+        pdfDoc.getPages().forEach(page => page.setRotation(angle));
         
         const rotatedBytes = await pdfDoc.save();
-        saveAs(new Blob([rotatedBytes], { type: 'application/pdf' }), `${originalName}_rotated.pdf`);
+        saveAs(new Blob([rotatedBytes], { type: 'application/pdf' }), 'rotated.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('rotate', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Add Watermark
 async function addWatermark() {
+    showLoading();
     try {
         const file = document.getElementById('watermarkInput').files[0];
-        const text = document.getElementById('watermarkText').value;
-        if (!file || !text) throw new Error('Select PDF and enter text');
-        const originalName = getFileName(file);
-
+        const text = document.getElementById('watermarkText').value.trim();
+        if (!file) throw new Error('Please select a PDF file');
+        if (!text) throw new Error('Please enter watermark text');
+        
         const { PDFDocument, rgb } = PDFLib;
-        const bytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(bytes);
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        
         const pages = pdfDoc.getPages();
+        const font = await pdfDoc.embedFont(PDFDocument.Font.HelveticaBold);
         
         pages.forEach(page => {
+            const { width, height } = page.getSize();
             page.drawText(text, {
-                x: 50, y: 50,
-                size: 30,
+                x: width / 2 - (text.length * 7),
+                y: height / 2,
+                font,
+                size: 32,
                 color: rgb(0.8, 0.8, 0.8),
-                opacity: 0.5
+                opacity: 0.3
             });
         });
         
         const watermarkedBytes = await pdfDoc.save();
-        saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), `${originalName}_watermarked.pdf`);
+        saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 'watermarked.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('watermark', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Compress PDF
 async function compressPDF() {
+    showLoading();
     try {
         const file = document.getElementById('compressInput').files[0];
-        if (!file) throw new Error('Select a PDF file');
-        const originalName = getFileName(file);
-
+        if (!file) throw new Error('Please select a PDF file');
+        
         const { PDFDocument } = PDFLib;
-        const bytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(bytes, {
-            ignoreEncryption: true,
-            throwOnInvalidObject: false
-        });
-
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        
         const compressedBytes = await pdfDoc.save({
             useObjectStreams: true,
             compress: true
         });
-
-        saveAs(new Blob([compressedBytes], { type: 'application/pdf' }), `${originalName}_compressed.pdf`);
+        
+        saveAs(new Blob([compressedBytes], { type: 'application/pdf' }), 'compressed.pdf');
     } catch (err) {
-        alert(err.message);
+        showError('compress', err.message);
+    } finally {
+        hideLoading();
     }
 }
 
-// Extract Text
 async function extractText() {
+    showLoading();
     try {
         const file = document.getElementById('textInput').files[0];
-        if (!file) throw new Error('Select a PDF file');
-
-        const bytes = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(bytes).promise;
-        let fullText = '';
+        if (!file) throw new Error('Please select a PDF file');
+        
+        const pdfBytes = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        let text = '';
         
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            fullText += textContent.items.map(item => item.str).join(' ');
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n\n';
         }
         
-        document.getElementById('textOutput').textContent = fullText;
+        document.getElementById('textOutput').textContent = text;
     } catch (err) {
-        alert(err.message);
+        showError('text', err.message);
+    } finally {
+        hideLoading();
     }
 }
