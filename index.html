@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF ToolKit</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/pdf-lib@1.17.1"></script>
+    <script src="https://unpkg.com/jspdf@2.5.1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>PDF Toolkit</h1>
+        <p>Merge, Split, Convert PDFs for Free</p>
+    </header>
+
+    <div class="toolbox">
+        <!-- PDF Upload -->
+        <div class="tool-card" id="upload-tool">
+            <h2>Upload PDF</h2>
+            <input type="file" id="pdf-input" accept=".pdf" multiple>
+            <div id="pdf-preview"></div>
+        </div>
+
+        <!-- Merge PDFs -->
+        <div class="tool-card" id="merge-tool">
+            <h2>Merge PDFs</h2>
+            <button id="merge-btn">Merge & Download</button>
+        </div>
+
+        <!-- Split PDF -->
+        <div class="tool-card" id="split-tool">
+            <h2>Split PDF</h2>
+            <input type="number" id="split-page" placeholder="Page number">
+            <button id="split-btn">Split & Download</button>
+        </div>
+
+        <!-- Image to PDF -->
+        <div class="tool-card" id="image-to-pdf">
+            <h2>Image to PDF</h2>
+            <input type="file" id="image-input" accept="image/*">
+            <button id="convert-btn">Convert to PDF</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
