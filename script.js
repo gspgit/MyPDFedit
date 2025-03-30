@@ -69,25 +69,42 @@ splitBtn.addEventListener('click', async () => {
     const secondHalfBytes = await secondHalf.save();
     saveAs(new Blob([secondHalfBytes], { type: 'application/pdf' }), 'split_part2.pdf');
 });
-const convertBtn = document.getElementById('convert-btn');
-const imageInput = document.getElementById('image-input');
+document.getElementById('convert-btn').addEventListener('click', () => {
+  const imageInput = document.getElementById('image-input');
+  const file = imageInput.files[0];
 
-convertBtn.addEventListener('click', () => {
-    const file = imageInput.files[0];
-    if (!file) {
-        alert("Upload an image first!");
-        return;
-    }
+  if (!file) {
+    alert("Please select an image first!");
+    return;
+  }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const pdf = new jsPDF();
-            pdf.addImage(img, 'JPEG', 10, 10, 180, 180);
-            pdf.save('converted.pdf');
-        };
-        img.src = e.target.result;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        // Initialize PDF
+        const pdf = new window.jspdf.jsPDF();
+        
+        // Calculate dimensions to fit the page
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth - 20; // 10px margins on both sides
+        const imgHeight = (img.height * imgWidth) / img.width;
+
+        // Add image to PDF
+        pdf.addImage(img, 'JPEG', 10, 10, imgWidth, imgHeight);
+        
+        // Save the PDF
+        pdf.save('converted-image.pdf');
+      } catch (error) {
+        alert("Error generating PDF: " + error.message);
+        console.error(error);
+      }
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => alert("Failed to load the image.");
+    img.src = e.target.result;
+  };
+  reader.onerror = () => alert("Failed to read the file.");
+  reader.readAsDataURL(file);
 });
