@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Toolkit</title>
+    <title>Advanced PDF Toolkit</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
@@ -12,143 +12,89 @@
 </head>
 <body>
     <header>
-        <h1>PDF Toolkit</h1>
-        <p>Merge, Split, Convert PDFs - 100% Client-Side Processing</p>
+        <h1>Advanced PDF Toolkit</h1>
+        <p>All processing done in your browser - 100% secure</p>
     </header>
 
     <div class="tool-container">
-        <!-- Merge PDF Tool -->
+        <!-- Merge PDFs -->
         <div class="tool-card">
             <h2>Merge PDFs</h2>
-            <div class="error-message" id="mergeError"></div>
-            <div class="upload-container">
-                <input type="file" id="mergeInput" accept=".pdf" multiple hidden>
-                <label for="mergeInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF Files
-                </label>
-                <div class="file-list" id="mergeFileList"></div>
-            </div>
-            <button onclick="mergePDFs()" class="btn btn--primary">Merge & Download</button>
+            <input type="file" class="file-input" id="mergeInput" accept=".pdf" multiple>
+            <button onclick="mergePDFs()" class="btn">Merge PDFs</button>
         </div>
 
-        <!-- Split PDF Tool -->
+        <!-- Split PDF -->
         <div class="tool-card">
             <h2>Split PDF</h2>
-            <div class="error-message" id="splitError"></div>
-            <div class="upload-container">
-                <input type="file" id="splitInput" accept=".pdf" hidden>
-                <label for="splitInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF File
-                </label>
-                <div class="file-list" id="splitFileList"></div>
-            </div>
+            <input type="file" class="file-input" id="splitInput" accept=".pdf">
             <input type="number" id="splitPage" placeholder="Split after page..." class="num-input">
-            <button onclick="splitPDF()" class="btn btn--primary">Split PDF</button>
+            <button onclick="splitPDF()" class="btn">Split PDF</button>
         </div>
 
-        <!-- Image to PDF Tool -->
+        <!-- Image to PDF -->
         <div class="tool-card">
             <h2>Image to PDF</h2>
-            <div class="error-message" id="imageError"></div>
-            <div class="upload-container">
-                <input type="file" id="imageInput" accept="image/*" hidden>
-                <label for="imageInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select Image
-                </label>
-                <div class="file-list" id="imageFileList"></div>
-            </div>
-            <button onclick="imageToPDF()" class="btn btn--primary">Convert to PDF</button>
+            <input type="file" class="file-input" id="imageInput" accept="image/*">
+            <button onclick="imageToPDF()" class="btn">Convert</button>
         </div>
 
-        <!-- Rotate PDF Tool -->
+        <!-- Rotate PDF -->
         <div class="tool-card">
             <h2>Rotate PDF</h2>
-            <div class="error-message" id="rotateError"></div>
-            <div class="upload-container">
-                <input type="file" id="rotateInput" accept=".pdf" hidden>
-                <label for="rotateInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF File
-                </label>
-                <div class="file-list" id="rotateFileList"></div>
-            </div>
+            <input type="file" class="file-input" id="rotateInput" accept=".pdf">
             <select id="rotateAngle" class="select-input">
                 <option value="90">90° Clockwise</option>
-                <option value="-90">90° Counter-Clockwise</option>
+                <option value="-90">90° Counter</option>
                 <option value="180">180°</option>
             </select>
-            <button onclick="rotatePDF()" class="btn btn--primary">Rotate PDF</button>
+            <button onclick="rotatePDF()" class="btn">Rotate</button>
         </div>
 
-        <!-- Watermark PDF Tool -->
+        <!-- Add Watermark -->
         <div class="tool-card">
-            <h2>Add Watermark</h2>
-            <div class="error-message" id="watermarkError"></div>
-            <div class="upload-container">
-                <input type="file" id="watermarkInput" accept=".pdf" hidden>
-                <label for="watermarkInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF File
-                </label>
-                <div class="file-list" id="watermarkFileList"></div>
-            </div>
+            <h2>Watermark PDF</h2>
+            <input type="file" class="file-input" id="watermarkInput" accept=".pdf">
             <input type="text" id="watermarkText" placeholder="Watermark text" class="text-input">
-            <button onclick="addWatermark()" class="btn btn--primary">Apply Watermark</button>
+            <button onclick="addWatermark()" class="btn">Apply</button>
         </div>
 
-        <!-- Compress PDF Tool -->
+        <!-- Compress PDF -->
         <div class="tool-card">
             <h2>Compress PDF</h2>
-            <div class="error-message" id="compressError"></div>
-            <div class="upload-container">
-                <input type="file" id="compressInput" accept=".pdf" hidden>
-                <label for="compressInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF File
-                </label>
-                <div class="file-list" id="compressFileList"></div>
-            </div>
-            <button onclick="compressPDF()" class="btn btn--primary">Compress PDF</button>
+            <input type="file" class="file-input" id="compressInput" accept=".pdf">
+            <button onclick="compressPDF()" class="btn">Compress</button>
         </div>
 
-        <!-- Extract Text Tool -->
+        <!-- Extract Text -->
         <div class="tool-card">
             <h2>Extract Text</h2>
-            <div class="error-message" id="textError"></div>
-            <div class="upload-container">
-                <input type="file" id="textInput" accept=".pdf" hidden>
-                <label for="textInput" class="upload-label">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5M12 3v12m-4-4l4 4 4-4"/>
-                    </svg>
-                    Select PDF File
-                </label>
-                <div class="file-list" id="textFileList"></div>
-            </div>
-            <button onclick="extractText()" class="btn btn--primary">Extract Text</button>
-            <div class="text-output" id="textOutput"></div>
+            <input type="file" class="file-input" id="textInput" accept=".pdf">
+            <button onclick="extractText()" class="btn">Extract</button>
+            <div id="textOutput" class="text-output"></div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Processing your PDF...</p>
+    <!-- Preview Modal -->
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <h3>Preview - <span id="currentPart"></span></h3>
+                <div class="preview-controls">
+                    <button onclick="changePart(-1)" class="btn" id="prevPartBtn">← Part</button>
+                    <button onclick="changePage(-1)" class="btn">← Page</button>
+                    <span id="currentPage">Page 1</span>
+                    <button onclick="changePage(1)" class="btn">Page →</button>
+                    <button onclick="changePart(1)" class="btn" id="nextPartBtn">Part →</button>
+                </div>
+                <button onclick="closePreview()" class="btn close-btn">&times;</button>
+            </div>
+            <div id="pdfPreview"></div>
+            <div class="preview-footer">
+                <button onclick="downloadCurrentPart()" class="btn download-btn">Download</button>
+                <button onclick="closePreview()" class="btn cancel-btn">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
