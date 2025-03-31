@@ -192,35 +192,53 @@ async function pdfToImages() {
   Tesseract.setLogging(true);
   Tesseract.createWorker = Tesseract.createWorker || Tesseract.CreateWorker;
 async function extractText() {
-    try {
-        const file = document.getElementById('textExtractInput').files[0];
-        const lang = document.getElementById('ocrLang').value;
-        if (!file) throw new Error('Select a file');
+    const file = document.getElementById('textExtractInput').files[0];
+    const lang = document.getElementById('ocrLang').value;
+    const outputDiv = document.getElementById('textOutput');
 
-        let text = '';
-        
-        // For PDFs
+    if (!file) {
+        alert('Please select a file');
+        return;
+    }
+
+    try {
+        outputDiv.textContent = 'Processing...';
+
+        // Initialize Tesseract with CDN-hosted language data
+        const worker = await Tesseract.createWorker({
+            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/worker.min.js',
+            langPath: 'https://cdn.jsdelivr.net/npm/tesseract.js-data@4.0.0',
+            logger: m => console.log(m) // Remove this line in production
+        });
+
+        // Load selected language
+        await worker.loadLanguage(lang);
+        await worker.initialize(lang);
+
+        // Process PDFs
         if (file.type === 'application/pdf') {
             const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+            let fullText = '';
+            
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const content = await page.getTextContent();
-                text += content.items.map(item => item.str).join(' ');
+                fullText += content.items.map(item => item.str).join(' ');
             }
-        } 
-        // For Images
+            
+            outputDiv.textContent = fullText;
+        }
+        // Process Images
         else {
-            const worker = await Tesseract.createWorker();
-            await worker.loadLanguage(lang);
-            await worker.initialize(lang);
-            const { data: { text: ocrText } } = await worker.recognize(file);
-            text = ocrText;
-            await worker.terminate();
+            const { data: { text } } = await worker.recognize(file);
+            outputDiv.textContent = text;
         }
 
-        document.getElementById('textOutput').textContent = text;
+        await worker.terminate();
     } catch (err) {
-        alert(`Text Extraction Error: ${err.message}`);
+        outputDiv.textContent = '';
+        alert(`Error: ${err.message}`);
+        console.error(err);
     }
 }
 // Add Watermark 
