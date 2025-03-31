@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete PDF Toolkit</title>
+    <title>PDF Toolkit</title>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -12,17 +12,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Complete PDF Toolkit</h1>
-        <p>All processing done securely in your browser</p>
-    </header>
-
-    <div class="tool-container">
+    <div class="container">
         <!-- Merge PDFs -->
         <div class="tool-card">
             <h2>Merge PDFs</h2>
             <input type="file" class="file-input" id="mergeInput" accept=".pdf" multiple>
-            <button onclick="mergePDFs()" class="btn">Merge PDFs</button>
+            <button onclick="mergePDFs()" class="btn">Merge & Download</button>
         </div>
 
         <!-- Split PDF -->
@@ -31,13 +26,6 @@
             <input type="file" class="file-input" id="splitInput" accept=".pdf">
             <input type="number" id="splitPage" placeholder="Split after page..." class="num-input">
             <button onclick="splitPDF()" class="btn">Split PDF</button>
-        </div>
-
-        <!-- Image to PDF -->
-        <div class="tool-card">
-            <h2>Image to PDF</h2>
-            <input type="file" class="file-input" id="imageInput" accept="image/*">
-            <button onclick="imageToPDF()" class="btn">Convert</button>
         </div>
 
         <!-- Rotate PDF -->
@@ -52,46 +40,20 @@
             <button onclick="rotatePDF()" class="btn">Rotate</button>
         </div>
 
+        <!-- Image to PDF -->
+        <div class="tool-card">
+            <h2>Image to PDF</h2>
+            <input type="file" class="file-input" id="imageInput" accept="image/*">
+            <button onclick="imageToPDF()" class="btn">Convert</button>
+        </div>
+
         <!-- Compress PDF -->
         <div class="tool-card">
             <h2>Compress PDF</h2>
             <input type="file" class="file-input" id="compressInput" accept=".pdf">
             <button onclick="compressPDF()" class="btn">Compress</button>
         </div>
-
-        <!-- Extract Text -->
-        <div class="tool-card">
-            <h2>Extract Text</h2>
-            <input type="file" class="file-input" id="textInput" accept=".pdf">
-            <button onclick="extractText()" class="btn">Extract</button>
-            <div id="textOutput" class="text-output"></div>
-        </div>
     </div>
-
-    <!-- Preview Modal -->
-    <div id="previewModal" class="preview-modal">
-        <div class="preview-content">
-            <div class="preview-header">
-                <h3>Preview - <span id="currentPart"></span></h3>
-                <div class="preview-controls">
-                    <button onclick="changePart(-1)" class="btn" id="prevPartBtn">← Part</button>
-                    <button onclick="changePage(-1)" class="btn">← Page</button>
-                    <span id="currentPage">Page 1</span>
-                    <button onclick="changePage(1)" class="btn">Page →</button>
-                    <button onclick="changePart(1)" class="btn" id="nextPartBtn">Part →</button>
-                </div>
-                <button onclick="closePreview()" class="btn close-btn">&times;</button>
-            </div>
-            <div id="pdfPreview"></div>
-            <div class="preview-footer">
-                <button onclick="downloadCurrentPart()" class="btn download-btn">Download</button>
-                <button onclick="closePreview()" class="btn cancel-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Indicator -->
-    <div id="loading">Processing...</div>
 
     <script src="script.js"></script>
 </body>
