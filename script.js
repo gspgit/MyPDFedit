@@ -188,6 +188,9 @@ async function pdfToImages() {
     }
 }
 // Text Extraction 
+// Initialize Tesseract workers (add to script.js)
+  Tesseract.setLogging(true);
+  Tesseract.createWorker = Tesseract.createWorker || Tesseract.CreateWorker;
 async function extractText() {
     try {
         const file = document.getElementById('textExtractInput').files[0];
