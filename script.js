@@ -155,3 +155,122 @@ async function compressPDF() {
         alert(`Compression Error: ${err.message}`);
     }
 }
+// PDF to Images 
+async function pdfToImages() {
+    try {
+        const file = document.getElementById('pdfToImageInput').files[0];
+        const format = document.getElementById('imageFormat').value;
+        if (!file) throw new Error('Select a PDF file');
+
+        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+        const zip = new JSZip();
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ 
+                canvasContext: canvas.getContext('2d'), 
+                viewport 
+            }).promise;
+
+            const imgData = canvas.toDataURL(`image/${format}`);
+            zip.file(`page-${i}.${format}`, imgData.split(',')[1], { base64: true });
+        }
+
+        const zipFile = await zip.generateAsync({ type: 'blob' });
+        saveAs(zipFile, `${file.name.replace(/.pdf$/, "")}_images.zip`);
+    } catch (err) {
+        alert(`Conversion Error: ${err.message}`);
+    }
+}
+// Text Extraction 
+async function extractText() {
+    try {
+        const file = document.getElementById('textExtractInput').files[0];
+        const lang = document.getElementById('ocrLang').value;
+        if (!file) throw new Error('Select a file');
+
+        let text = '';
+        
+        // For PDFs
+        if (file.type === 'application/pdf') {
+            const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ');
+            }
+        } 
+        // For Images
+        else {
+            const worker = await Tesseract.createWorker();
+            await worker.loadLanguage(lang);
+            await worker.initialize(lang);
+            const { data: { text: ocrText } } = await worker.recognize(file);
+            text = ocrText;
+            await worker.terminate();
+        }
+
+        document.getElementById('textOutput').textContent = text;
+    } catch (err) {
+        alert(`Text Extraction Error: ${err.message}`);
+    }
+}
+// Add Watermark 
+async function addWatermark() {
+    try {
+        const file = document.getElementById('watermarkInput').files[0];
+        const text = document.getElementById('watermarkText').value;
+        const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
+        if (!file || !text) throw new Error('Select file and enter text');
+
+        // For PDFs
+        if (file.type === 'application/pdf') {
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+            const pages = pdfDoc.getPages();
+            
+            pages.forEach(page => {
+                page.drawText(text, {
+                    x: 50,
+                    y: page.getHeight() - 50,
+                    size: 30,
+                    opacity: opacity,
+                    color: PDFDocument.rgb(0.5, 0.5, 0.5)
+                });
+            });
+
+            const watermarkedBytes = await pdfDoc.save();
+            saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
+                `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
+        } 
+        // For Images
+        else {
+            const img = await new Promise(resolve => {
+                const image = new Image();
+                image.onload = () => resolve(image);
+                image.src = URL.createObjectURL(file);
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.drawImage(img, 0, 0);
+            ctx.globalAlpha = opacity;
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'rgba(128, 128, 128, 0.5)';
+            ctx.fillText(text, 50, img.height - 50);
+            
+            canvas.toBlob(blob => {
+                saveAs(blob, `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.${file.type.split('/')[1]}`);
+            }, file.type);
+        }
+    } catch (err) {
+        alert(`Watermark Error: ${err.message}`);
+    }
+}
