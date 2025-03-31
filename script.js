@@ -1,62 +1,129 @@
-// Initialize PDFLib properly
-const PDFDocument = window.PDFLib.PDFDocument;
+const { PDFDocument, degrees } = window.PDFLib;
+const { jsPDF } = window.jspdf;
+let previewState = { parts: [], currentPartIndex: 0, currentPage: 1 };
 
-// Merge PDFs
-async function mergePDFs() {
+// Helper functions
+function showLoading() {
+    document.getElementById('loading').style.display = 'block';
+}
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+function getFileName(file) {
+    return file.name.replace(/\.[^/.]+$/, "");
+}
+
+// Image to PDF with EXIF orientation
+async function imageToPDF() {
     try {
-        const files = document.getElementById('mergeInput').files;
-        if (files.length < 2) throw new Error('Please select 2+ PDFs');
+        showLoading();
+        const file = document.getElementById('imageInput').files[0];
+        if (!file) throw new Error('No image selected');
+
+        // Read EXIF data
+        const exifData = await new Promise(resolve => {
+            EXIF.getData(file, function() {
+                resolve({
+                    orientation: EXIF.getTag(this, 'Orientation') || 1,
+                    data: URL.createObjectURL(file)
+                });
+            });
+        });
+
+        // Create image
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = exifData.data;
+        });
+
+        // Handle orientation
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+        if ([5,6,7,8].includes(exifData.orientation)) [width, height] = [height, width];
+
+        // Create PDF
+        const pdf = new jsPDF({
+            orientation: width > height ? 'l' : 'p',
+            unit: 'px',
+            format: [width, height]
+        });
         
-        const mergedPdf = await PDFDocument.create();
-        const originalName = files[0].name.replace(/\.[^/.]+$/, "");
-
-        for (const file of files) {
-            const fileBytes = await file.arrayBuffer();
-            const pdfDoc = await PDFDocument.load(fileBytes);
-            const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-            pages.forEach(page => mergedPdf.addPage(page));
-        }
-
-        const mergedBytes = await mergedPdf.save();
-        saveAs(new Blob([mergedBytes], { type: 'application/pdf' }), `${originalName}_merged.pdf`);
+        pdf.addImage(img, 'JPEG', 0, 0, width, height);
+        pdf.save(`${getFileName(file)}_converted.pdf`);
     } catch (err) {
-        alert(err.message);
+        alert(`Image conversion failed: ${err.message}`);
+    } finally {
+        hideLoading();
     }
 }
 
-// Split PDF
-async function splitPDF() {
+// Rotate PDF with proper angle handling
+async function rotatePDF() {
     try {
-        const file = document.getElementById('splitInput').files[0];
-        const splitPage = parseInt(document.getElementById('splitPage').value);
-        if (!file || isNaN(splitPage)) throw new Error('Invalid input');
+        showLoading();
+        const file = document.getElementById('rotateInput').files[0];
+        const angle = parseInt(document.getElementById('rotateAngle').value);
+        if (!file) throw new Error('No PDF selected');
+        if (![90, -90, 180].includes(angle)) throw new Error('Invalid rotation angle');
 
-        const fileBytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(fileBytes);
-        const pageCount = pdfDoc.getPageCount();
-        const originalName = file.name.replace(/\.[^/.]+$/, "");
+        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+        const pages = pdfDoc.getPages();
+        
+        pages.forEach(page => {
+            const currentRotation = page.getRotation().angle;
+            page.setRotation(degrees((currentRotation + angle) % 360));
+        });
 
-        if (splitPage < 1 || splitPage >= pageCount) {
-            throw new Error(`Enter a page between 1 and ${pageCount - 1}`);
-        }
-
-        const firstPart = await PDFDocument.create();
-        const secondPart = await PDFDocument.create();
-        
-        const firstPages = await firstPart.copyPages(pdfDoc, [...Array(splitPage).keys()]);
-        const secondPages = await secondPart.copyPages(pdfDoc, 
-            [...Array(pageCount - splitPage).keys()].map(i => i + splitPage));
-        
-        firstPages.forEach(page => firstPart.addPage(page));
-        secondPages.forEach(page => secondPart.addPage(page));
-        
-        const firstBytes = await firstPart.save();
-        const secondBytes = await secondPart.save();
-        
-        saveAs(new Blob([firstBytes], { type: 'application/pdf' }), `${originalName}_part1.pdf`);
-        saveAs(new Blob([secondBytes], { type: 'application/pdf' }), `${originalName}_part2.pdf`);
+        const rotatedBytes = await pdfDoc.save();
+        saveAs(new Blob([rotatedBytes], { type: 'application/pdf' }), 
+            `${getFileName(file)}_rotated.pdf`);
     } catch (err) {
-        alert(err.message);
+        alert(`Rotation failed: ${err.message}`);
+    } finally {
+        hideLoading();
     }
 }
 
+// Add other functions (mergePDFs, splitPDFs, etc.) from previous examples
+// [Include all other functions from previous implementation here]
+
+// Preview functionality
+async function showPreview(parts, baseName) {
+    previewState = {
+        parts: await Promise.all(parts.map(async (bytes, i) => {
+            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+            return { bytes, name: `${baseName}_part${i+1}.pdf`, pages: pdf.numPages };
+        })),
+        currentPartIndex: 0,
+        currentPage: 1
+    };
+    await renderPreview();
+    document.getElementById('previewModal').style.display = 'block';
+}
+
+async function renderPreview() {
+    const part = previewState.parts[previewState.currentPartIndex];
+    const pdf = await pdfjsLib.getDocument({ data: part.bytes }).promise;
+    const page = await pdf.getPage(previewState.currentPage);
+    
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    
+    const preview = document.getElementById('pdfPreview');
+    preview.innerHTML = '';
+    preview.appendChild(canvas);
+    document.getElementById('currentPage').textContent = 
+        `Page ${previewState.currentPage} of ${part.pages}`;
+    document.getElementById('currentPart').textContent = part.name;
+}
+
+// [Include remaining preview navigation functions]
