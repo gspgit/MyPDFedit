@@ -229,27 +229,34 @@ async function addWatermark() {
         const file = document.getElementById('watermarkInput').files[0];
         const text = document.getElementById('watermarkText').value;
         const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
-        if (!file || !text) throw new Error('Select file and enter text');
+        
+        if (!file || !text) throw new Error('Select a PDF and enter watermark text');
+        
+        // Load PDF and get RGB method
+        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+        const { rgb } = pdfDoc;
 
-        // For PDFs
-        if (file.type === 'application/pdf') {
-            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-            const pages = pdfDoc.getPages();
-            
-            pages.forEach(page => {
-                page.drawText(text, {
-                    x: 50,
-                    y: page.getHeight() - 50,
-                    size: 30,
-                    opacity: opacity,
-                    color: PDFDocument.rgb(0.5, 0.5, 0.5)
-                });
+        // Add watermark to all pages
+        pdfDoc.getPages().forEach(page => {
+            page.drawText(text, {
+                x: 50,
+                y: page.getHeight() - 100, // Position from top
+                size: 40,
+                opacity: opacity,
+                color: rgb(0.5, 0.5, 0.5), // Grey color
+                rotate: degrees(-45) // Diagonal watermark
             });
+        });
 
-            const watermarkedBytes = await pdfDoc.save();
-            saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
-                `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
-        } 
+        // Save and download
+        const watermarkedBytes = await pdfDoc.save();
+        saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
+            `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
+        
+    } catch (err) {
+        alert(`PDF Watermark Error: ${err.message}`);
+    }
+}
         // For Images
         else {
             const img = await new Promise(resolve => {
