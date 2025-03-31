@@ -1,66 +1,160 @@
+/* Base Styles */
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 20px;
-    background: #f0f2f5;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.6;
 }
 
 header {
     text-align: center;
     margin-bottom: 30px;
-    padding: 20px;
-    background: #fff;
+    padding: 30px;
+    background: #3498db;
+    color: white;
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+/* Tool Container */
 .tool-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    gap: 25px;
     padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
+/* Tool Cards */
 .tool-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.tool-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.tool-card h2 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.3em;
+}
+
+/* Inputs & Buttons */
 .file-input {
     width: 100%;
     margin: 10px 0;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.file-input:hover {
+    border-color: #3498db;
 }
 
 .btn {
-    background: #4CAF50;
+    background: #3498db;
     color: white;
-    padding: 10px 20px;
+    padding: 12px 25px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s;
 }
 
 .btn:hover {
-    background: #45a049;
+    background: #2980b9;
+    transform: translateY(-2px);
 }
 
-.num-input, .select-input {
+/* Preview Modal */
+.preview-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 8px;
-    margin: 5px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
 }
 
+.preview-content {
+    background: white;
+    margin: 2% auto;
+    padding: 25px;
+    width: 90%;
+    max-width: 900px;
+    border-radius: 12px;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.preview-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#currentPage {
+    margin: 0 15px;
+    font-weight: 600;
+}
+
+#pdfPreview {
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.preview-footer {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Loading Indicator */
+#loading {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background: #27ae60;
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .tool-container {
         grid-template-columns: 1fr;
+    }
+    
+    .preview-content {
+        margin: 10px;
+        width: 95%;
     }
 }
