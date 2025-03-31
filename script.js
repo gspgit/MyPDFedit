@@ -310,4 +310,4 @@ async function addWatermark() {
     } catch (err) {
         alert(`Watermark Error: ${err.message}`);
     }
-}
+
