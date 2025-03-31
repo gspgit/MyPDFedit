@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Toolkit</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/pdf-lib@1.17.1"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
@@ -49,29 +49,6 @@
                 <option value="-90">-90°</option>
             </select>
             <button onclick="rotatePDF()" class="btn">Rotate</button>
-        </div>
-
-        <!-- Add Watermark -->
-        <div class="tool-card">
-            <h2>Add Watermark</h2>
-            <input type="file" class="file-input" id="watermarkInput" accept=".pdf">
-            <input type="text" id="watermarkText" placeholder="Watermark text" class="text-input">
-            <button onclick="addWatermark()" class="btn">Apply</button>
-        </div>
-
-        <!-- Compress PDF -->
-        <div class="tool-card">
-            <h2>Compress PDF</h2>
-            <input type="file" class="file-input" id="compressInput" accept=".pdf">
-            <button onclick="compressPDF()" class="btn">Compress</button>
-        </div>
-
-        <!-- Extract Text -->
-        <div class="tool-card">
-            <h2>Extract Text</h2>
-            <input type="file" class="file-input" id="textInput" accept=".pdf">
-            <button onclick="extractText()" class="btn">Extract</button>
-            <div id="textOutput" class="text-output"></div>
         </div>
     </div>
 
