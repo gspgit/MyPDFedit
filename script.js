@@ -231,30 +231,39 @@ async function addWatermark() {
         const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
         
         if (!file || !text) throw new Error('Select a PDF and enter watermark text');
-        
-        // Load PDF and get RGB method
-        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-        const { rgb } = pdfDoc;
+        if (file.type !== 'application/pdf') return; // Skip non-PDF files
 
+        // Load PDF document
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        
+        // Embed standard font
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        
         // Add watermark to all pages
-        pdfDoc.getPages().forEach(page => {
+        const pages = pdfDoc.getPages();
+        pages.forEach((page, index) => {
+            const { width, height } = page.getSize();
+            
             page.drawText(text, {
-                x: 50,
-                y: page.getHeight() - 100, // Position from top
+                x: width / 2 - 100,  // Center horizontally
+                y: height / 2,       // Center vertically
                 size: 40,
                 opacity: opacity,
-                color: rgb(0.5, 0.5, 0.5), // Grey color
-                rotate: degrees(-45) // Diagonal watermark
+                font: font,
+                color: rgb(0.5, 0.5, 0.5), // Gray color
+                rotate: degrees(-45),       // Diagonal watermark
             });
         });
 
-        // Save and download
-        const watermarkedBytes = await pdfDoc.save();
-        saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
-            `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
+        // Save modified PDF
+        const modifiedPdfBytes = await pdfDoc.save();
+        saveAs(new Blob([modifiedPdfBytes], { type: 'application/pdf' }), 
+            `watermarked_${file.name}`);
         
     } catch (err) {
         alert(`PDF Watermark Error: ${err.message}`);
+        console.error('Watermark Error Details:', err);
     }
 }
         // For Images
