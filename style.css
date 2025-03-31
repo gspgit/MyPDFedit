@@ -1,10 +1,8 @@
-/* Base Styles */
 body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 20px;
     background: #f0f2f5;
-    color: #333;
 }
 
 header {
@@ -16,7 +14,6 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Tool Container */
 .tool-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -24,74 +21,46 @@ header {
     padding: 20px;
 }
 
-/* Tool Cards */
 .tool-card {
     background: #fff;
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
 }
 
-.tool-card:hover {
-    transform: translateY(-2px);
-}
-
-/* Inputs & Buttons */
 .file-input {
     width: 100%;
     margin: 10px 0;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    cursor: pointer;
 }
 
 .btn {
     background: #4CAF50;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     width: 100%;
     margin-top: 10px;
-    transition: background 0.3s;
-    font-size: 16px;
 }
 
 .btn:hover {
     background: #45a049;
 }
 
-.num-input, .select-input, .text-input {
+.num-input, .select-input {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
+    padding: 8px;
+    margin: 5px 0;
     border: 1px solid #ddd;
     border-radius: 5px;
-    font-size: 14px;
 }
 
-/* Text Output */
-.text-output {
-    margin-top: 15px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    font-size: 14px;
-    line-height: 1.5;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
     .tool-container {
         grid-template-columns: 1fr;
-    }
-    
-    body {
-        padding: 10px;
     }
 }
