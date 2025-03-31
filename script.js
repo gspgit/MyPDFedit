@@ -192,53 +192,35 @@ async function pdfToImages() {
   Tesseract.setLogging(true);
   Tesseract.createWorker = Tesseract.createWorker || Tesseract.CreateWorker;
 async function extractText() {
-    const file = document.getElementById('textExtractInput').files[0];
-    const lang = document.getElementById('ocrLang').value;
-    const outputDiv = document.getElementById('textOutput');
-
-    if (!file) {
-        alert('Please select a file');
-        return;
-    }
-
     try {
-        outputDiv.textContent = 'Processing...';
+        const file = document.getElementById('textExtractInput').files[0];
+        const lang = document.getElementById('ocrLang').value;
+        if (!file) throw new Error('Select a file');
 
-        // Initialize Tesseract with CDN-hosted language data
-        const worker = await Tesseract.createWorker({
-            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/worker.min.js',
-            langPath: 'https://cdn.jsdelivr.net/npm/tesseract.js-data@4.0.0',
-            logger: m => console.log(m) // Remove this line in production
-        });
-
-        // Load selected language
-        await worker.loadLanguage(lang);
-        await worker.initialize(lang);
-
-        // Process PDFs
+        let text = '';
+        
+        // For PDFs
         if (file.type === 'application/pdf') {
             const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
-            let fullText = '';
-            
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const content = await page.getTextContent();
-                fullText += content.items.map(item => item.str).join(' ');
+                text += content.items.map(item => item.str).join(' ');
             }
-            
-            outputDiv.textContent = fullText;
-        }
-        // Process Images
+        } 
+        // For Images
         else {
-            const { data: { text } } = await worker.recognize(file);
-            outputDiv.textContent = text;
+            const worker = await Tesseract.createWorker();
+            await worker.loadLanguage(lang);
+            await worker.initialize(lang);
+            const { data: { text: ocrText } } = await worker.recognize(file);
+            text = ocrText;
+            await worker.terminate();
         }
 
-        await worker.terminate();
+        document.getElementById('textOutput').textContent = text;
     } catch (err) {
-        outputDiv.textContent = '';
-        alert(`Error: ${err.message}`);
-        console.error(err);
+        alert(`Text Extraction Error: ${err.message}`);
     }
 }
 // Add Watermark 
@@ -247,43 +229,27 @@ async function addWatermark() {
         const file = document.getElementById('watermarkInput').files[0];
         const text = document.getElementById('watermarkText').value;
         const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
-        
-        if (!file || !text) throw new Error('Select a PDF and enter watermark text');
-        if (file.type !== 'application/pdf') return; // Skip non-PDF files
+        if (!file || !text) throw new Error('Select file and enter text');
 
-        // Load PDF document
-        const pdfBytes = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes);
-        
-        // Embed standard font
-        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-        
-        // Add watermark to all pages
-        const pages = pdfDoc.getPages();
-        pages.forEach((page, index) => {
-            const { width, height } = page.getSize();
+        // For PDFs
+        if (file.type === 'application/pdf') {
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+            const pages = pdfDoc.getPages();
             
-            page.drawText(text, {
-                x: width / 2 - 100,  // Center horizontally
-                y: height / 2,       // Center vertically
-                size: 40,
-                opacity: opacity,
-                font: font,
-                color: rgb(0.5, 0.5, 0.5), // Gray color
-                rotate: degrees(-45),       // Diagonal watermark
+            pages.forEach(page => {
+                page.drawText(text, {
+                    x: 50,
+                    y: page.getHeight() - 50,
+                    size: 30,
+                    opacity: opacity,
+                    color: PDFDocument.rgb(0.5, 0.5, 0.5)
+                });
             });
-        });
 
-        // Save modified PDF
-        const modifiedPdfBytes = await pdfDoc.save();
-        saveAs(new Blob([modifiedPdfBytes], { type: 'application/pdf' }), 
-            `watermarked_${file.name}`);
-        
-    } catch (err) {
-        alert(`PDF Watermark Error: ${err.message}`);
-        console.error('Watermark Error Details:', err);
-    }
-}
+            const watermarkedBytes = await pdfDoc.save();
+            saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
+                `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
+        } 
         // For Images
         else {
             const img = await new Promise(resolve => {
@@ -310,4 +276,4 @@ async function addWatermark() {
     } catch (err) {
         alert(`Watermark Error: ${err.message}`);
     }
-
+}
