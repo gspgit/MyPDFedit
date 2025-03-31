@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script>
+    <!-- Add these scripts -->
+<script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,6 +56,38 @@
             <input type="file" class="file-input" id="compressInput" accept=".pdf">
             <button onclick="compressPDF()" class="btn">Compress</button>
         </div>
+        <!-- PDF to Images -->
+<div class="tool-card">
+    <h2>PDF to Images</h2>
+    <input type="file" class="file-input" id="pdfToImageInput" accept=".pdf">
+    <select id="imageFormat" class="select-input">
+        <option value="jpeg">JPEG</option>
+        <option value="png">PNG</option>
+    </select>
+    <button onclick="pdfToImages()" class="btn">Convert</button>
+</div>
+
+<!-- Text Extraction -->
+<div class="tool-card">
+    <h2>Extract Text</h2>
+    <input type="file" class="file-input" id="textExtractInput" accept=".pdf,image/*">
+    <select id="ocrLang" class="select-input">
+        <option value="eng">English</option>
+        <option value="chi_sim">Chinese</option>
+        <option value="spa">Spanish</option>
+    </select>
+    <button onclick="extractText()" class="btn">Extract</button>
+    <div id="textOutput" class="text-output"></div>
+</div>
+
+<!-- Add Watermark -->
+<div class="tool-card">
+    <h2>Add Watermark</h2>
+    <input type="file" class="file-input" id="watermarkInput" accept=".pdf,image/*">
+    <input type="text" id="watermarkText" placeholder="Watermark text" class="text-input">
+    <input type="number" id="watermarkOpacity" placeholder="Opacity (0-1)" step="0.1" class="num-input">
+    <button onclick="addWatermark()" class="btn">Apply</button>
+</div>
     </div>
 
     <script src="script.js"></script>
