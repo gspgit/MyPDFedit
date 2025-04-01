@@ -1,5 +1,16 @@
-const { PDFDocument, degrees } = window.PDFLib;
+// ======================
+// Dependencies & Setup
+// ======================
+const { PDFDocument, degrees, rgb, StandardFonts } = window.PDFLib;
 const { jsPDF } = window.jspdf;
+
+// Initialize Tesseract OCR
+Tesseract.setLogging(true);
+Tesseract.createWorker = Tesseract.createWorker || Tesseract.CreateWorker;
+
+// ======================
+// Core PDF Tools
+// ======================
 
 // Merge PDFs
 async function mergePDFs() {
@@ -41,7 +52,6 @@ async function splitPDF() {
             throw new Error(`Enter a page between 1 and ${pageCount - 1}`);
         }
 
-        // Create parts
         const firstPart = await PDFDocument.create();
         const secondPart = await PDFDocument.create();
         
@@ -53,7 +63,6 @@ async function splitPDF() {
         firstPages.forEach(page => firstPart.addPage(page));
         secondPages.forEach(page => secondPart.addPage(page));
         
-        // Save parts
         const part1Bytes = await firstPart.save();
         const part2Bytes = await secondPart.save();
         
@@ -90,49 +99,6 @@ async function rotatePDF() {
     }
 }
 
-// Image to PDF
-async function imageToPDF() {
-    try {
-        const file = document.getElementById('imageInput').files[0];
-        if (!file) throw new Error('Select an image');
-
-        // Get EXIF orientation
-        const orientation = await new Promise(resolve => {
-            EXIF.getData(file, function() {
-                resolve(EXIF.getTag(this, 'Orientation') || 1);
-            });
-        });
-
-        // Load image
-        const img = await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
-            image.onerror = reject;
-            image.src = URL.createObjectURL(file);
-        });
-
-        // Handle orientation
-        let width = img.naturalWidth;
-        let height = img.naturalHeight;
-        if ([5,6,7,8].includes(orientation)) [width, height] = [height, width];
-
-        // Create PDF
-        const pdf = new jsPDF({
-            orientation: width > height ? 'l' : 'p',
-            unit: 'mm',
-            format: [width * 0.264583, height * 0.264583] // Convert pixels to mm
-        });
-        
-        pdf.addImage(img, 'JPEG', 0, 0, 
-            width * 0.264583, 
-            height * 0.264583
-        );
-        pdf.save(`${file.name.replace(/\.[^/.]+$/, "")}_converted.pdf`);
-    } catch (err) {
-        alert(`Conversion Error: ${err.message}`);
-    }
-}
-
 // Compress PDF
 async function compressPDF() {
     try {
@@ -155,129 +121,7 @@ async function compressPDF() {
         alert(`Compression Error: ${err.message}`);
     }
 }
-// PDF to Images 
-async function pdfToImages() {
-    try {
-        const file = document.getElementById('pdfToImageInput').files[0];
-        const format = document.getElementById('imageFormat').value;
-        if (!file) throw new Error('Select a PDF file');
 
-        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
-        const zip = new JSZip();
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 2 });
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            await page.render({ 
-                canvasContext: canvas.getContext('2d'), 
-                viewport 
-            }).promise;
-
-            const imgData = canvas.toDataURL(`image/${format}`);
-            zip.file(`page-${i}.${format}`, imgData.split(',')[1], { base64: true });
-        }
-
-        const zipFile = await zip.generateAsync({ type: 'blob' });
-        saveAs(zipFile, `${file.name.replace(/.pdf$/, "")}_images.zip`);
-    } catch (err) {
-        alert(`Conversion Error: ${err.message}`);
-    }
-}
-// Text Extraction 
-// Initialize Tesseract workers (add to script.js)
-  Tesseract.setLogging(true);
-  Tesseract.createWorker = Tesseract.createWorker || Tesseract.CreateWorker;
-async function extractText() {
-    try {
-        const file = document.getElementById('textExtractInput').files[0];
-        const lang = document.getElementById('ocrLang').value;
-        if (!file) throw new Error('Select a file');
-
-        let text = '';
-        
-        // For PDFs
-        if (file.type === 'application/pdf') {
-            const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(item => item.str).join(' ');
-            }
-        } 
-        // For Images
-        else {
-            const worker = await Tesseract.createWorker();
-            await worker.loadLanguage(lang);
-            await worker.initialize(lang);
-            const { data: { text: ocrText } } = await worker.recognize(file);
-            text = ocrText;
-            await worker.terminate();
-        }
-
-        document.getElementById('textOutput').textContent = text;
-    } catch (err) {
-        alert(`Text Extraction Error: ${err.message}`);
-    }
-}
-// Add Watermark 
-async function addWatermark() {
-    try {
-        const file = document.getElementById('watermarkInput').files[0];
-        const text = document.getElementById('watermarkText').value;
-        const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
-        if (!file || !text) throw new Error('Select file and enter text');
-
-        // For PDFs
-        if (file.type === 'application/pdf') {
-            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
-            const pages = pdfDoc.getPages();
-            
-            pages.forEach(page => {
-                page.drawText(text, {
-                    x: 50,
-                    y: page.getHeight() - 50,
-                    size: 30,
-                    opacity: opacity,
-                    color: PDFDocument.rgb(0.5, 0.5, 0.5)
-                });
-            });
-
-            const watermarkedBytes = await pdfDoc.save();
-            saveAs(new Blob([watermarkedBytes], { type: 'application/pdf' }), 
-                `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
-        } 
-        // For Images
-        else {
-            const img = await new Promise(resolve => {
-                const image = new Image();
-                image.onload = () => resolve(image);
-                image.src = URL.createObjectURL(file);
-            });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.drawImage(img, 0, 0);
-            ctx.globalAlpha = opacity;
-            ctx.font = '30px Arial';
-            ctx.fillStyle = 'rgba(128, 128, 128, 0.5)';
-            ctx.fillText(text, 50, img.height - 50);
-            
-            canvas.toBlob(blob => {
-                saveAs(blob, `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.${file.type.split('/')[1]}`);
-            }, file.type);
-        }
-    }  
-    catch (err) {
-        alert(`Watermark Error: ${err.message}`);
-    }
-}
 // Delete PDF Pages
 async function deletePDFPages() {
     try {
@@ -288,7 +132,6 @@ async function deletePDFPages() {
         const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
         const pageIndices = parsePageRanges(pagesInput, pdfDoc.getPageCount());
         
-        // Keep pages NOT in the deletion list
         const pagesToKeep = Array.from({ length: pdfDoc.getPageCount() })
             .map((_, i) => i)
             .filter(i => !pageIndices.includes(i));
@@ -327,8 +170,184 @@ async function reorderPDFPages() {
     }
 }
 
-// Helper: Convert "1,3-5" to [0,2,3,4] (zero-indexed)
+// ======================
+// Image Tools
+// ======================
+
+// Image to PDF
+async function imageToPDF() {
+    try {
+        const file = document.getElementById('imageInput').files[0];
+        if (!file) throw new Error('Select an image');
+
+        const orientation = await new Promise(resolve => {
+            EXIF.getData(file, function() {
+                resolve(EXIF.getTag(this, 'Orientation') || 1);
+            });
+        });
+
+        const objectURL = URL.createObjectURL(file);
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => {
+                URL.revokeObjectURL(objectURL);
+                resolve(image);
+            };
+            image.onerror = reject;
+            image.src = objectURL;
+        });
+
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+        if ([5,6,7,8].includes(orientation)) [width, height] = [height, width];
+
+        const pdf = new jsPDF({
+            orientation: width > height ? 'l' : 'p',
+            unit: 'mm',
+            format: [width * 0.264583, height * 0.264583]
+        });
+        
+        pdf.addImage(img, 'JPEG', 0, 0, 
+            width * 0.264583, 
+            height * 0.264583
+        );
+        pdf.save(`${file.name.replace(/\.[^/.]+$/, "")}_converted.pdf`);
+    } catch (err) {
+        alert(`Conversion Error: ${err.message}`);
+    }
+}
+
+// Add Watermark
+async function addWatermark() {
+    try {
+        const file = document.getElementById('watermarkInput').files[0];
+        const text = document.getElementById('watermarkText').value;
+        const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
+        if (!file || !text) throw new Error('Select file and enter text');
+
+        if (file.type === 'application/pdf') {
+            const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+            const { rgb } = pdfDoc;
+            const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+            
+            pdfDoc.getPages().forEach(page => {
+                page.drawText(text, {
+                    x: 50,
+                    y: page.getHeight() - 50,
+                    size: 30,
+                    opacity: opacity,
+                    font: font,
+                    color: rgb(0.5, 0.5, 0.5)
+                });
+            });
+
+            const bytes = await pdfDoc.save();
+            saveAs(new Blob([bytes], { type: 'application/pdf' }), 
+                `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.pdf`);
+        } else {
+            const img = await new Promise(resolve => {
+                const image = new Image();
+                image.onload = () => resolve(image);
+                image.src = URL.createObjectURL(file);
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.drawImage(img, 0, 0);
+            ctx.globalAlpha = opacity;
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'rgba(128, 128, 128, 0.5)';
+            ctx.fillText(text, 50, img.height - 50);
+            
+            canvas.toBlob(blob => {
+                saveAs(blob, `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.${file.type.split('/')[1]}`);
+            }, file.type);
+        }
+    } catch (err) {
+        alert(`Watermark Error: ${err.message}`);
+    }
+}
+
+// PDF to Images
+async function pdfToImages() {
+    try {
+        const file = document.getElementById('pdfToImageInput').files[0];
+        const format = document.getElementById('imageFormat').value;
+        if (!file) throw new Error('Select a PDF file');
+
+        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+        const zip = new JSZip();
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ 
+                canvasContext: canvas.getContext('2d'), 
+                viewport 
+            }).promise;
+
+            const imgData = canvas.toDataURL(`image/${format}`);
+            zip.file(`page-${i}.${format}`, imgData.split(',')[1], { base64: true });
+        }
+
+        const zipFile = await zip.generateAsync({ type: 'blob' });
+        saveAs(zipFile, `${file.name.replace(/.pdf$/, "")}_images.zip`);
+    } catch (err) {
+        alert(`Conversion Error: ${err.message}`);
+    }
+}
+
+// ======================
+// Text Extraction (OCR)
+// ======================
+async function extractText() {
+    try {
+        const file = document.getElementById('textExtractInput').files[0];
+        const lang = document.getElementById('ocrLang').value;
+        const output = document.getElementById('textOutput');
+        if (!file) throw new Error('Select a file');
+
+        output.textContent = 'Processing...';
+        let text = '';
+        
+        if (file.type === 'application/pdf') {
+            const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ');
+            }
+        } else {
+            const worker = await Tesseract.createWorker({
+                workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/worker.min.js',
+                langPath: 'https://cdn.jsdelivr.net/npm/tesseract.js-data@4.0.0'
+            });
+            await worker.loadLanguage(lang);
+            await worker.initialize(lang);
+            const { data: { text: ocrText } } = await worker.recognize(file);
+            text = ocrText;
+            await worker.terminate();
+        }
+
+        output.textContent = text;
+    } catch (err) {
+        document.getElementById('textOutput').textContent = '';
+        alert(`Text Extraction Error: ${err.message}`);
+    }
+}
+
+// ======================
+// Helper Functions
+// ======================
 function parsePageRanges(input, totalPages) {
+    if (!input) throw new Error('No pages specified');
     return input.split(',')
         .flatMap(part => {
             if (part.includes('-')) {
@@ -340,12 +359,12 @@ function parsePageRanges(input, totalPages) {
         .filter(n => !isNaN(n) && n >= 0 && n < totalPages);
 }
 
-// Helper: Convert "3,1,2" to [2,0,1] (zero-indexed)
 function parsePageOrder(input, totalPages) {
+    if (!input) throw new Error('No order specified');
     return input.split(',')
         .map(n => {
             const num = parseInt(n) - 1;
-            if (isNaN(num) throw new Error('Invalid page number');
+            if (isNaN(num)) throw new Error('Invalid page number');
             return num;
         })
         .filter(n => n >= 0 && n < totalPages);
