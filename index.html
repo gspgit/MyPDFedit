@@ -98,6 +98,21 @@
     <input type="number" id="watermarkOpacity" placeholder="Opacity (0-1)" step="0.1" class="num-input">
     <button onclick="addWatermark()" class="btn">Apply</button>
 </div>
+        <!-- Delete PDF Pages -->
+<div class="tool-card">
+    <h2>Delete PDF Pages</h2>
+    <input type="file" class="file-input" id="deletePagesInput" accept=".pdf">
+    <input type="text" id="pagesToDelete" placeholder="Pages to delete (e.g., 1,3-5)" class="text-input">
+    <button onclick="deletePDFPages()" class="btn">Delete Pages</button>
+</div>
+
+<!-- Reorder PDF Pages -->
+<div class="tool-card">
+    <h2>Reorder PDF Pages</h2>
+    <input type="file" class="file-input" id="reorderPagesInput" accept=".pdf">
+    <input type="text" id="newPageOrder" placeholder="New order (e.g., 3,1,2)" class="text-input">
+    <button onclick="reorderPDFPages()" class="btn">Reorder Pages</button>
+</div>
     </div>
 
     <script src="script.js"></script>
