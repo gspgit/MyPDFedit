@@ -273,7 +273,80 @@ async function addWatermark() {
                 saveAs(blob, `${file.name.replace(/\.[^/.]+$/, "")}_watermarked.${file.type.split('/')[1]}`);
             }, file.type);
         }
-    } catch (err) {
+    }  
+    catch (err) {
         alert(`Watermark Error: ${err.message}`);
     }
+}
+// Delete PDF Pages
+async function deletePDFPages() {
+    try {
+        const file = document.getElementById('deletePagesInput').files[0];
+        const pagesInput = document.getElementById('pagesToDelete').value;
+        if (!file || !pagesInput) throw new Error('Select PDF and enter pages');
+
+        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+        const pageIndices = parsePageRanges(pagesInput, pdfDoc.getPageCount());
+        
+        // Keep pages NOT in the deletion list
+        const pagesToKeep = Array.from({ length: pdfDoc.getPageCount() })
+            .map((_, i) => i)
+            .filter(i => !pageIndices.includes(i));
+
+        const newPdf = await PDFDocument.create();
+        const copiedPages = await newPdf.copyPages(pdfDoc, pagesToKeep);
+        copiedPages.forEach(page => newPdf.addPage(page));
+
+        const newPdfBytes = await newPdf.save();
+        saveAs(new Blob([newPdfBytes], { type: 'application/pdf' }), 
+            `${file.name.replace(/.pdf$/i, '_edited.pdf')}`);
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+}
+
+// Reorder PDF Pages
+async function reorderPDFPages() {
+    try {
+        const file = document.getElementById('reorderPagesInput').files[0];
+        const orderInput = document.getElementById('newPageOrder').value;
+        if (!file || !orderInput) throw new Error('Select PDF and enter new order');
+
+        const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+        const pageIndices = parsePageOrder(orderInput, pdfDoc.getPageCount());
+
+        const newPdf = await PDFDocument.create();
+        const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
+        copiedPages.forEach(page => newPdf.addPage(page));
+
+        const newPdfBytes = await newPdf.save();
+        saveAs(new Blob([newPdfBytes], { type: 'application/pdf' }), 
+            `${file.name.replace(/.pdf$/i, '_reordered.pdf')}`);
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+}
+
+// Helper: Convert "1,3-5" to [0,2,3,4] (zero-indexed)
+function parsePageRanges(input, totalPages) {
+    return input.split(',')
+        .flatMap(part => {
+            if (part.includes('-')) {
+                const [start, end] = part.split('-').map(n => Math.min(parseInt(n) - 1, totalPages - 1));
+                return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+            }
+            return [parseInt(part) - 1];
+        })
+        .filter(n => !isNaN(n) && n >= 0 && n < totalPages);
+}
+
+// Helper: Convert "3,1,2" to [2,0,1] (zero-indexed)
+function parsePageOrder(input, totalPages) {
+    return input.split(',')
+        .map(n => {
+            const num = parseInt(n) - 1;
+            if (isNaN(num) throw new Error('Invalid page number');
+            return num;
+        })
+        .filter(n => n >= 0 && n < totalPages);
 }
